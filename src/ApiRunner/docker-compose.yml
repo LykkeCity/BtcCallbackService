@@ -1,0 +1,9 @@
+version: '2'
+
+services:
+  apirunner:
+    image: lykkex/prebroadcasthandler-service
+    ports:
+     - "7001:7001"
+    environment:
+     - ConnectionStrings__Azure=${CONNSTR}

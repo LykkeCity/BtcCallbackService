@@ -1,11 +1,13 @@
-﻿namespace Core.Services.Models
+﻿using System;
+
+namespace Core.Services.Models
 {
     public class TransactionNotification
     {
         /// <summary>
         /// Internal transaction id
         /// </summary>
-        public string TransactionId { get; set; }
+        public Guid TransactionId { get; set; }
 
         /// <summary>
         /// Blockchain tx hash

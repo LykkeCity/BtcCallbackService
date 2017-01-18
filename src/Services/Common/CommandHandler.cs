@@ -29,7 +29,7 @@ namespace Services.Common
 
         public async Task HandleOperation(TransactionNotification transactionModel)
         {
-            var tx = await _bitCoinTransactionsRepository.FindByTransactionIdAsync(transactionModel.TransactionId);
+            var tx = await _bitCoinTransactionsRepository.FindByTransactionIdAsync(transactionModel.TransactionId.ToString());
 
             if (tx != null)
             {

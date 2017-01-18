@@ -40,6 +40,14 @@ namespace AzureRepositories
                 new TransactionQueueSender(
                     new AzureQueueExt(settings.Db.BitCoinQueueConnectionString, "outdata"), log))
                     .As<ITransactionQueueSender>();
+
+            ioc.RegisterInstance(
+                    new ProcessedTransactionsRepository(
+                        new AzureTableStorage<PreProcessedTransaction>(settings.Db.BitCoinQueueConnectionString,
+                            "CallbackProcessed", log),
+                        new AzureTableStorage<PostProcessedTransaction>(settings.Db.BitCoinQueueConnectionString,
+                            "CallbackProcessed", log)))
+                .As<IProcessedTransactionsRepository>();
         }
     }
 }

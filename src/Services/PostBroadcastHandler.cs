@@ -20,12 +20,12 @@ namespace Services
 
         public async Task HandleNotification(TransactionNotification notification)
         {
-            var tx = await _bitCoinTransactionsRepository.FindByTransactionIdAsync(notification.TransactionId);
+            var tx = await _bitCoinTransactionsRepository.FindByTransactionIdAsync(notification.TransactionId.ToString());
 
             if (tx != null)
             {
                 var cmdType = tx.RequestData.GetCommandType();
-                await _transactionQueueSender.Send(cmdType, notification.TransactionId, notification.TransactionHash);
+                await _transactionQueueSender.Send(cmdType, notification.TransactionId.ToString(), notification.TransactionHash);
             }
         }
     }

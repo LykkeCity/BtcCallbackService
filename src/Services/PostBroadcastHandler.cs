@@ -24,7 +24,7 @@ namespace Services
 
             if (tx != null)
             {
-                var cmdType = tx.RequestData.GetCommandType();
+                var cmdType = tx.CommandType;
                 await _transactionQueueSender.Send(cmdType, notification.TransactionId.ToString(), notification.TransactionHash);
             }
         }

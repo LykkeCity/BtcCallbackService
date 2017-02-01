@@ -1,5 +1,14 @@
 ﻿namespace Core.Services.Models
 {
+    public class IssueContextData
+    {
+        public string ClientId { get; set; }
+        public string AssetId { get; set; }
+        public double Amount { get; set; }
+
+        public string CashOperationId { get; set; }
+    }
+
     public class CashOutContextData
     {
         public string ClientId { get; set; }

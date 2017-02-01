@@ -29,9 +29,12 @@ namespace Services
             RegisterHandler(CommandTypes.TransferAll, HandleTransferAsync);
         }
 
-        private Task HandleIssueAsync(IBitcoinTransaction tx, string hash)
+        private async Task HandleIssueAsync(IBitcoinTransaction tx, string hash)
         {
-            return Task.FromResult(0);
+            var contextData = tx.GetContextData<IssueContextData>();
+
+            await _cashOperationsRepository.UpdateBlockchainHashAsync(contextData.ClientId,
+                contextData.CashOperationId, hash);
         }
 
         private async Task HandleCashOutAsync(IBitcoinTransaction tx, string hash)

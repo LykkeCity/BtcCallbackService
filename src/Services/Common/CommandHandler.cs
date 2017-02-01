@@ -33,7 +33,7 @@ namespace Services.Common
 
             if (tx != null)
             {
-                var cmdType = tx.RequestData.GetCommandType();
+                var cmdType = tx.CommandType;
 
                 var handler = GetHandler(cmdType);
 

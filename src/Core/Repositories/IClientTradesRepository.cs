@@ -47,7 +47,6 @@ namespace Core.Repositories
         Task SetDetectionTimeAndConfirmations(string clientId, string recordId, DateTime detectTime, int confirmations);
         Task SetBtcTransactionAsync(string clientId, string recordId, string btcTransactionId);
         Task SetIsSettledAsync(string clientId, string id);
-        Task<IEnumerable<IClientTrade>> GetByHashAsync(string blockchainHash);
         Task<IEnumerable<IClientTrade>> GetByMultisigAsync(string multisig);
         Task<IEnumerable<IClientTrade>> GetByMultisigsAsync(string[] multisigs);
 

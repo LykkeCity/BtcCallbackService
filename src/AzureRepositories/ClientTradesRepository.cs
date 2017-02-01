@@ -120,12 +120,10 @@ namespace AzureRepositories
     public class ClientTradesRepository : IClientTradesRepository
     {
         private readonly INoSQLTableStorage<ClientTradeEntity> _tableStorage;
-        private readonly INoSQLTableStorage<AzureIndex> _blockChainHashIndices;
 
-        public ClientTradesRepository(INoSQLTableStorage<ClientTradeEntity> tableStorage, INoSQLTableStorage<AzureIndex> blockChainHashIndices)
+        public ClientTradesRepository(INoSQLTableStorage<ClientTradeEntity> tableStorage)
         {
             _tableStorage = tableStorage;
-            _blockChainHashIndices = blockChainHashIndices;
         }
 
         [Obsolete("Trades are created on ME side now.")]
@@ -176,9 +174,6 @@ namespace AzureRepositories
 
             var dtPartitionKey = ClientTradeEntity.ByDt.GeneratePartitionKey();
             var dtRowKey = ClientTradeEntity.ByDt.GenerateRowKey(recordId);
-
-            var indexEntity = AzureIndex.Create(hash, rowKey, partitionKey, rowKey);
-            await _blockChainHashIndices.InsertOrReplaceAsync(indexEntity);
 
             await _tableStorage.MergeAsync(partitionKey, rowKey, entity =>
             {
@@ -296,13 +291,6 @@ namespace AzureRepositories
                 entity.IsSettled = true;
                 return entity;
             });
-        }
-
-        public async Task<IEnumerable<IClientTrade>> GetByHashAsync(string blockchainHash)
-        {
-            var indexes = await _blockChainHashIndices.GetDataAsync(blockchainHash);
-            var keyValueTuples = indexes?.Select(x => new Tuple<string, string>(x.PrimaryPartitionKey, x.PrimaryRowKey));
-            return await _tableStorage.GetDataAsync(keyValueTuples);
         }
 
         public async Task<IEnumerable<IClientTrade>> GetByMultisigAsync(string multisig)

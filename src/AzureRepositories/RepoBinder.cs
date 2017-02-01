@@ -26,8 +26,7 @@ namespace AzureRepositories
 
             ioc.RegisterInstance(
                     new ClientTradesRepository(
-                        new AzureTableStorage<ClientTradeEntity>(settings.Db.HTradesConnString, "Trades", log),
-                        new AzureTableStorage<AzureIndex>(settings.Db.HTradesConnString, "Trades", log)))
+                        new AzureTableStorage<ClientTradeEntity>(settings.Db.HTradesConnString, "Trades", log)))
                 .As<IClientTradesRepository>();
 
             ioc.RegisterInstance(

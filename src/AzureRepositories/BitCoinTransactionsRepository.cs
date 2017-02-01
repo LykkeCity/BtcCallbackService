@@ -37,6 +37,7 @@ namespace AzureRepositories
         public string TransactionId => RowKey;
         public DateTime Created { get; set; }
         public DateTime? ResponseDateTime { get; set; }
+        public string CommandType { get; set; }
         public string RequestData { get; set; }
         public string ResponseData { get; set; }
         public string ContextData { get; set; }
@@ -63,12 +64,6 @@ namespace AzureRepositories
         public BitCoinTransactionsRepository(INoSQLTableStorage<BitCoinTransactionEntity> tableStorage)
         {
             _tableStorage = tableStorage;
-        }
-
-        public async Task CreateAsync(string transactionId, string requestData, string contextData)
-        {
-            var newEntity = BitCoinTransactionEntity.ByTransactionId.CreateNew(transactionId, requestData, contextData);
-            await _tableStorage.InsertAsync(newEntity);
         }
 
         public async Task<IBitcoinTransaction> FindByTransactionIdAsync(string transactionId)

@@ -27,6 +27,15 @@ namespace Services
             RegisterHandler(CommandTypes.Swap, HandleSwapAsync);
             RegisterHandler(CommandTypes.Transfer, HandleTransferAsync);
             RegisterHandler(CommandTypes.TransferAll, HandleTransferAsync);
+            RegisterHandler(CommandTypes.Destroy, HandleDestroyAsync);
+        }
+
+        private async Task HandleDestroyAsync(IBitcoinTransaction tx, string hash)
+        {
+            var contextData = tx.GetContextData<UncolorContextData>();
+
+            await _cashOperationsRepository.UpdateBlockchainHashAsync(contextData.ClientId,
+                contextData.CashOperationId, hash);
         }
 
         private async Task HandleIssueAsync(IBitcoinTransaction tx, string hash)

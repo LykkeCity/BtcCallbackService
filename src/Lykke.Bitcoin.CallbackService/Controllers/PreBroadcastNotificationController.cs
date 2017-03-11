@@ -14,14 +14,11 @@ namespace Lykke.Bitcoin.CallbackService.Controllers
     {
         private readonly IPreBroadcastHandler _preBroadcastHandler;
         private readonly ILog _log;
-        private readonly IProcessedTransactionsRepository _processedTransactionsRepository;
 
-        public PreBroadcastNotificationController(IPreBroadcastHandler preBroadcastHandler, ILog log,
-            IProcessedTransactionsRepository processedTransactionsRepository)
+        public PreBroadcastNotificationController(IPreBroadcastHandler preBroadcastHandler, ILog log)
         {
             _preBroadcastHandler = preBroadcastHandler;
             _log = log;
-            _processedTransactionsRepository = processedTransactionsRepository;
         }
 
         /// <summary>
@@ -36,22 +33,7 @@ namespace Lykke.Bitcoin.CallbackService.Controllers
                     "In method")
             };
 
-
-            var canHandle =
-                await _processedTransactionsRepository.CanStartPreBroadcast(transactionNotification.TransactionId);
-
-            if (canHandle)
-            {
-                await _preBroadcastHandler.HandleNotification(transactionNotification);
-            }
-            else
-            {
-                logTasks.Add(
-                    _log.WriteInfoAsync("PreBroadcastNotificationController", "Post",
-                        transactionNotification.ToJson(),
-                        "Already processed. Skipped.")
-                );
-            }
+            await _preBroadcastHandler.HandleNotification(transactionNotification);
 
             await Task.WhenAll(logTasks);
         }

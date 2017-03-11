@@ -13,14 +13,11 @@ namespace Lykke.Bitcoin.CallbackService.Controllers
     public class PostBroadcastNotificationController : Controller
     {
         private readonly IPostBroadcastHandler _postBroadcastHandler;
-        private readonly IProcessedTransactionsRepository _processedTransactionsRepository;
         private readonly ILog _log;
 
-        public PostBroadcastNotificationController(IPostBroadcastHandler postBroadcastHandler,
-            IProcessedTransactionsRepository processedTransactionsRepository, ILog log)
+        public PostBroadcastNotificationController(IPostBroadcastHandler postBroadcastHandler, ILog log)
         {
             _postBroadcastHandler = postBroadcastHandler;
-            _processedTransactionsRepository = processedTransactionsRepository;
             _log = log;
         }
 
@@ -28,7 +25,7 @@ namespace Lykke.Bitcoin.CallbackService.Controllers
         /// Used to notify LykkeWallet Backend before transaction broadcasting
         /// </summary>
         [HttpPost]
-        public async Task Post([FromBody]TransactionNotification transactionNotification)
+        public async Task Post([FromBody] TransactionNotification transactionNotification)
         {
             var logTasks = new List<Task>
             {
@@ -37,23 +34,8 @@ namespace Lykke.Bitcoin.CallbackService.Controllers
                     "In method")
             };
 
-
-            var canHandle =
-                await _processedTransactionsRepository.CanStartPostBroadcast(transactionNotification.TransactionId);
-
-            if (canHandle)
-            {
-                await _postBroadcastHandler.HandleNotification(transactionNotification);
-            }
-            else
-            {
-                logTasks.Add(
-                    _log.WriteInfoAsync("PostBroadcastNotificationController", "Post",
-                        transactionNotification.ToJson(),
-                        "Already processed. Skipped.")
-                );
-            }
-
+            await _postBroadcastHandler.HandleNotification(transactionNotification);
+            
             await Task.WhenAll(logTasks);
         }
     }

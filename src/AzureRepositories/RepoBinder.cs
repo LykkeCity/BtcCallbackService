@@ -47,6 +47,11 @@ namespace AzureRepositories
                         new AzureTableStorage<PostProcessedTransaction>(settings.Db.BitCoinQueueConnectionString,
                             "CallbackProcessed", log)))
                 .As<IProcessedTransactionsRepository>();
+
+            ioc.RegisterInstance(new InternalTransactionsRepository(
+                    new AzureTableStorage<InternalTransactionEntity>(settings.Db.BitCoinQueueConnectionString,
+                        "InternalTransactions", log)))
+                .As<IInternalTransactionsRepository>();
         }
     }
 }

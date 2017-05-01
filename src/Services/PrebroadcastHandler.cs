@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Linq;
 using System.Threading.Tasks;
+using Common;
 using Core.Repositories;
 using Core.Services;
 using Core.Services.Models;
@@ -10,115 +10,64 @@ namespace Services
     public class PreBroadcastHandler : IPreBroadcastHandler
     {
         private readonly IBitCoinTransactionsRepository _bitCoinTransactionsRepository;
-        private readonly ICashOperationsRepository _cashOperationsRepository;
-        private readonly IClientTradesRepository _clientTradesRepository;
-        private readonly ITransferEventsRepository _transferEventsRepository;
-        private readonly IInternalTransactionsRepository _internalTransactionsRepository;
-        private readonly Dictionary<string, Func<IBitcoinTransaction, string, Task>> _handlers = new Dictionary<string, Func<IBitcoinTransaction, string, Task>>();
+        private readonly IInternalOperationsRepository _internalOperationsRepository;
+        private readonly IBackgroundWorkRequestProducer _backgroundWorkRequestProducer;
 
         public PreBroadcastHandler(IBitCoinTransactionsRepository bitCoinTransactionsRepository,
-            ICashOperationsRepository cashOperationsRepository,
-            IClientTradesRepository clientTradesRepository,
-            ITransferEventsRepository transferEventsRepository, IInternalTransactionsRepository internalTransactionsRepository)
+            IInternalOperationsRepository internalOperationsRepository,
+            IBackgroundWorkRequestProducer backgroundWorkRequestProducer)
         {
             _bitCoinTransactionsRepository = bitCoinTransactionsRepository;
-            _cashOperationsRepository = cashOperationsRepository;
-            _clientTradesRepository = clientTradesRepository;
-            _transferEventsRepository = transferEventsRepository;
-            _internalTransactionsRepository = internalTransactionsRepository;
-
-            RegisterHandler(CommandTypes.Issue, HandleIssueAsync);
-            RegisterHandler(CommandTypes.CashOut, HandleCashOutAsync);
-            RegisterHandler(CommandTypes.Swap, HandleSwapAsync);
-            RegisterHandler(CommandTypes.Transfer, HandleTransferAsync);
-            RegisterHandler(CommandTypes.TransferAll, HandleTransferAsync);
-            RegisterHandler(CommandTypes.Destroy, HandleDestroyAsync);
-        }
-
-        private async Task HandleDestroyAsync(IBitcoinTransaction tx, string hash)
-        {
-            var contextData = tx.GetContextData<UncolorContextData>();
-
-            await _cashOperationsRepository.UpdateBlockchainHashAsync(contextData.ClientId,
-                contextData.CashOperationId, hash);
-        }
-
-        private async Task HandleIssueAsync(IBitcoinTransaction tx, string hash)
-        {
-            var contextData = tx.GetContextData<IssueContextData>();
-
-            await _cashOperationsRepository.UpdateBlockchainHashAsync(contextData.ClientId,
-                contextData.CashOperationId, hash);
-        }
-
-        private async Task HandleCashOutAsync(IBitcoinTransaction tx, string hash)
-        {
-            var contextData = tx.GetContextData<CashOutContextData>();
-
-            await _cashOperationsRepository.UpdateBlockchainHashAsync(contextData.ClientId,
-                contextData.CashOperationId, hash);
-        }
-
-        private async Task HandleSwapAsync(IBitcoinTransaction tx, string hash)
-        {
-            var contextData = tx.GetContextData<SwapContextData>();
-            foreach (var item in contextData.Trades)
-            {
-                await _clientTradesRepository.UpdateBlockChainHashAsync(item.ClientId, item.TradeId,
-                    hash);
-            }
-        }
-
-        private async Task HandleTransferAsync(IBitcoinTransaction tx, string hash)
-        {
-            var contextData = tx.GetContextData<TransferContextData>();
-
-            foreach (var transfer in contextData.Transfers)
-            {
-                await _transferEventsRepository.UpdateBlockChainHashAsync(transfer.ClientId, transfer.OperationId, hash);
-            }
-        }
-
-        public void RegisterHandler(string operation, Func<IBitcoinTransaction, string, Task> handler)
-        {
-            _handlers.Add(operation, handler);
+            _internalOperationsRepository = internalOperationsRepository;
+            _backgroundWorkRequestProducer = backgroundWorkRequestProducer;
         }
 
         public async Task HandleNotification(TransactionNotification notification)
         {
-            await HandleOperation(notification);
-        }
+            var tx = await _bitCoinTransactionsRepository.FindByTransactionIdAsync(notification.TransactionId.ToString());
 
-        public async Task HandleOperation(TransactionNotification transactionModel)
-        {
-            var tx = await _bitCoinTransactionsRepository.FindByTransactionIdAsync(transactionModel.TransactionId.ToString());
+            var insertInternalOperationTask = _internalOperationsRepository.InsertAsync(new InternalOperation
+            {
+                Hash = notification.TransactionHash,
+                TransactionId = notification.TransactionId,
+                CommandType = tx?.CommandType,
+                OperationIds = GetOperationIds(tx)
+            });
 
             if (tx != null)
             {
                 var cmdType = tx.CommandType;
 
-                var handler = GetHandler(cmdType);
+                await _backgroundWorkRequestProducer.ProduceRequest(
+                    WorkType.UpdateHashForOperations, new UpdateHashForOperationsContext(cmdType, tx.ContextData, notification.TransactionHash));
+            }
 
-                if (handler != null)
-                {
-                    await handler(tx, transactionModel.TransactionHash);
-                }
-            }
-            else
-            {
-                //unknown internal command. Should be skipped by tx detector
-                await _internalTransactionsRepository.InsertAsync(new InternalTransaction
-                {
-                    Hash = transactionModel.TransactionHash,
-                    TransactionId = transactionModel.TransactionId
-                });
-            }
+            await insertInternalOperationTask;
         }
 
-        public Func<IBitcoinTransaction, string, Task> GetHandler(string command)
+        private string[] GetOperationIds(IBitcoinTransaction tx)
         {
-            if (_handlers.ContainsKey(command))
-                return _handlers[command];
+            switch (tx?.CommandType)
+            {
+                case CommandTypes.Issue:
+                    var issueContext = tx.ContextData.DeserializeJson<IssueContextData>();
+                    return new [] { issueContext.CashOperationId};
+                case CommandTypes.CashOut:
+                    var cashOutContext = tx.ContextData.DeserializeJson<CashOutContextData>();
+                    return new [] { cashOutContext.CashOperationId };
+                case CommandTypes.Swap:
+                    var swapContext = tx.ContextData.DeserializeJson<SwapContextData>();
+                    return swapContext.Trades.Select(x => x.TradeId).ToArray();
+                case CommandTypes.Transfer:
+                    var transferContext = tx.ContextData.DeserializeJson<TransferContextData>();
+                    return transferContext.Transfers.Select(x => x.OperationId).ToArray();
+                case CommandTypes.TransferAll:
+                    var transferAllContext = tx.ContextData.DeserializeJson<TransferContextData>();
+                    return transferAllContext.Transfers.Select(x => x.OperationId).ToArray();
+                case CommandTypes.Destroy:
+                    var destroyContext = tx.ContextData.DeserializeJson<UncolorContextData>();
+                    return new [] { destroyContext.CashOperationId };
+            }
 
             return null;
         }

@@ -48,10 +48,14 @@ namespace AzureRepositories
                             "CallbackProcessed", log)))
                 .As<IProcessedTransactionsRepository>();
 
-            ioc.RegisterInstance(new InternalTransactionsRepository(
-                    new AzureTableStorage<InternalTransactionEntity>(settings.Db.BitCoinQueueConnectionString,
-                        "InternalTransactions", log)))
-                .As<IInternalTransactionsRepository>();
+            ioc.RegisterInstance(new InternalOperationsRepository(
+                    new AzureTableStorage<InternalOperationEntity>(settings.Db.BitCoinQueueConnectionString,
+                        "InternalOperations", log)))
+                .As<IInternalOperationsRepository>();
+
+            ioc.RegisterInstance<IBackgroundWorkRequestProducer>(
+                new BackgroundWorkRequestProducer(new AzureQueueExt(settings.Db.ClientPersonalInfoConnString,
+                    "background-worker")));
         }
     }
 }

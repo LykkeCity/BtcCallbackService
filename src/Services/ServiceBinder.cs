@@ -1,5 +1,7 @@
 ﻿using Autofac;
+using Core.PerformanceMonitor;
 using Core.Services;
+using Services.PerformanceMonitor;
 
 namespace Services
 {
@@ -9,6 +11,8 @@ namespace Services
         {
             ioc.RegisterType<PreBroadcastHandler>().As<IPreBroadcastHandler>().SingleInstance();
             ioc.RegisterType<PostBroadcastHandler>().As<IPostBroadcastHandler>().SingleInstance();
+
+            ioc.RegisterType<PerformanceMonitorFactory>().As<IPerformanceMonitorFactory>().SingleInstance();
         }
     }
 }

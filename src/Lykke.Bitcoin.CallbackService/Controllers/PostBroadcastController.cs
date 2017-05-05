@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Common;
 using Common.Log;
+using Core.PerformanceMonitor;
 using Core.Repositories;
 using Core.Services;
 using Core.Services.Models;
@@ -13,12 +14,10 @@ namespace Lykke.Bitcoin.CallbackService.Controllers
     public class PostBroadcastNotificationController : Controller
     {
         private readonly IPostBroadcastHandler _postBroadcastHandler;
-        private readonly ILog _log;
 
-        public PostBroadcastNotificationController(IPostBroadcastHandler postBroadcastHandler, ILog log)
+        public PostBroadcastNotificationController(IPostBroadcastHandler postBroadcastHandler)
         {
             _postBroadcastHandler = postBroadcastHandler;
-            _log = log;
         }
 
         /// <summary>
@@ -26,17 +25,8 @@ namespace Lykke.Bitcoin.CallbackService.Controllers
         /// </summary>
         [HttpPost]
         public async Task Post([FromBody] TransactionNotification transactionNotification)
-        {
-            var logTasks = new List<Task>
-            {
-                _log.WriteInfoAsync("PostBroadcastNotificationController", "Post",
-                    transactionNotification.ToJson(),
-                    "In method")
-            };
-
+        {   
             await _postBroadcastHandler.HandleNotification(transactionNotification);
-            
-            await Task.WhenAll(logTasks);
         }
     }
 }

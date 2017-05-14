@@ -51,10 +51,10 @@ namespace AzureRepositories
             _tableStorage = tableStorage;
         }
 
-        public async Task InsertAsync(IInternalOperation operation)
+        public async Task InsertOrReplaceAsync(IInternalOperation operation)
         {
             var entity = InternalOperationEntity.Create(operation);
-            await _tableStorage.InsertAsync(entity);
+            await _tableStorage.InsertOrReplaceAsync(entity);
         }
     }
 }

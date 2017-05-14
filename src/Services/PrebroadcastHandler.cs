@@ -32,7 +32,7 @@ namespace Services
                 monitor.Step("Find by transactiom id");
                 var tx = await _bitCoinTransactionsRepository.FindByTransactionIdAsync(notification.TransactionId.ToString());
 
-                var insertInternalOperationTask = _internalOperationsRepository.InsertAsync(new InternalOperation
+                var insertInternalOperationTask = _internalOperationsRepository.InsertOrReplaceAsync(new InternalOperation
                 {
                     Hash = notification.TransactionHash,
                     TransactionId = notification.TransactionId,

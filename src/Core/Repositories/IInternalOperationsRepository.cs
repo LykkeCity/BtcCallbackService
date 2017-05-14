@@ -21,6 +21,6 @@ namespace Core.Repositories
 
     public interface IInternalOperationsRepository
     {
-        Task InsertAsync(IInternalOperation operation);
+        Task InsertOrReplaceAsync(IInternalOperation operation);
     }
 }

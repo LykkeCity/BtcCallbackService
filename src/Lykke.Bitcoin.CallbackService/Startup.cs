@@ -18,8 +18,6 @@ namespace Lykke.Bitcoin.CallbackService
 {
     public class Startup
     {
-        const string SettingsBlobName = "generalsettings.json";
-
         public IConfigurationRoot Configuration { get; }
 
         public Startup(IHostingEnvironment env)
@@ -36,7 +34,11 @@ namespace Lykke.Bitcoin.CallbackService
         // For more information on how to configure your application, visit http://go.microsoft.com/fwlink/?LinkID=398940
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
-            var settings = GeneralSettingsReader.ReadGeneralSettings<BaseSettings>(Configuration.GetConnectionString("Azure"), SettingsBlobName);
+#if DEBUG
+            var settings = GeneralSettingsReader.ReadGeneralSettingsLocal<CallbackServiceSettings>(Configuration.GetConnectionString("Main")).CallbackService;
+#else
+            var settings = GeneralSettingsReader.ReadGeneralSettings<CallbackServiceSettings>(Configuration.GetConnectionString("Main")).CallbackService;
+#endif
 
             services.AddMvc();
 

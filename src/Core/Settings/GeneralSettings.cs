@@ -1,5 +1,10 @@
 ﻿namespace Core.Settings
 {
+    public class CallbackServiceSettings
+    {
+        public BaseSettings CallbackService { get; set; }
+    }
+
     public class BaseSettings
     {
         public DbSettings Db { get; set; }

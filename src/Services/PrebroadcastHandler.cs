@@ -12,16 +12,14 @@ namespace Services
     {
         private readonly IBitCoinTransactionsRepository _bitCoinTransactionsRepository;
         private readonly IInternalOperationsRepository _internalOperationsRepository;
-        private readonly IBackgroundWorkRequestProducer _backgroundWorkRequestProducer;
         private readonly IPerformanceMonitorFactory _performanceMonitorFactory;
 
         public PreBroadcastHandler(IBitCoinTransactionsRepository bitCoinTransactionsRepository,
             IInternalOperationsRepository internalOperationsRepository,
-            IBackgroundWorkRequestProducer backgroundWorkRequestProducer, IPerformanceMonitorFactory performanceMonitorFactory)
+            IPerformanceMonitorFactory performanceMonitorFactory)
         {
             _bitCoinTransactionsRepository = bitCoinTransactionsRepository;
             _internalOperationsRepository = internalOperationsRepository;
-            _backgroundWorkRequestProducer = backgroundWorkRequestProducer;
             _performanceMonitorFactory = performanceMonitorFactory;
         }
 
@@ -39,15 +37,6 @@ namespace Services
                     CommandType = tx?.CommandType,
                     OperationIds = GetOperationIds(tx)
                 });
-
-                monitor.Step("Produce request");
-                if (tx != null)
-                {
-                    var cmdType = tx.CommandType;
-
-                    await _backgroundWorkRequestProducer.ProduceRequest(
-                        WorkType.UpdateHashForOperations, new UpdateHashForOperationsContext(cmdType, tx.ContextData, notification.TransactionHash));
-                }
 
                 monitor.Step("Wait for insert internal operation");
                 await insertInternalOperationTask;

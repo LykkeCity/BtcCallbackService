@@ -52,10 +52,6 @@ namespace AzureRepositories
                     new AzureTableStorage<InternalOperationEntity>(settings.Db.BitCoinQueueConnectionString,
                         "InternalOperations", log)))
                 .As<IInternalOperationsRepository>();
-
-            ioc.RegisterInstance<IBackgroundWorkRequestProducer>(
-                new BackgroundWorkRequestProducer(new AzureQueueExt(settings.Db.ClientPersonalInfoConnString,
-                    "background-worker")));
         }
     }
 }

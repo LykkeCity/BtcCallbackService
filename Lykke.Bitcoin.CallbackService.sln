@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{89B5F6AA-8553-48E5-9E46-3DB0131EE61B}"
 EndProject
@@ -9,17 +9,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Main", "Main", "{DBB5D792-5
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Repositories", "Repositories", "{E157A2D9-11D5-4936-B3F0-0A2FA263D1A4}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "AzureRepositories", "src\AzureRepositories\AzureRepositories.xproj", "{35AC12BD-5F28-44B9-AD4F-77C1F053E56E}"
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Core", "src\Core\Core.xproj", "{6880D23D-645B-4AC9-A540-915458A0BA6E}"
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Services", "src\Services\Services.xproj", "{19E0E266-E6CC-4A29-9C79-9CF948B482BE}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Runners", "Runners", "{2CD09234-973B-4F62-8AAC-01B80CBA50B5}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "ApiRunner", "src\ApiRunner\ApiRunner.xproj", "{A3198305-9CD1-4136-ADFC-D1C12FA692FA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureRepositories", "src\AzureRepositories\AzureRepositories.csproj", "{35AC12BD-5F28-44B9-AD4F-77C1F053E56E}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Lykke.Bitcoin.СallbackService", "src\Lykke.Bitcoin.CallbackService\Lykke.Bitcoin.СallbackService.xproj", "{DAB205A6-01DA-4607-ABA5-C8C1ACC0951B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Core", "src\Core\Core.csproj", "{6880D23D-645B-4AC9-A540-915458A0BA6E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Services", "src\Services\Services.csproj", "{19E0E266-E6CC-4A29-9C79-9CF948B482BE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApiRunner", "src\ApiRunner\ApiRunner.csproj", "{A3198305-9CD1-4136-ADFC-D1C12FA692FA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Bitcoin.CallbackService", "src\Lykke.Bitcoin.CallbackService\Lykke.Bitcoin.CallbackService.csproj", "{DAB205A6-01DA-4607-ABA5-C8C1ACC0951B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,11 +54,14 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{DBB5D792-51F5-4A77-B5A5-43D71A102C60} = {89B5F6AA-8553-48E5-9E46-3DB0131EE61B}
 		{E157A2D9-11D5-4936-B3F0-0A2FA263D1A4} = {89B5F6AA-8553-48E5-9E46-3DB0131EE61B}
+		{2CD09234-973B-4F62-8AAC-01B80CBA50B5} = {89B5F6AA-8553-48E5-9E46-3DB0131EE61B}
 		{35AC12BD-5F28-44B9-AD4F-77C1F053E56E} = {E157A2D9-11D5-4936-B3F0-0A2FA263D1A4}
 		{6880D23D-645B-4AC9-A540-915458A0BA6E} = {DBB5D792-51F5-4A77-B5A5-43D71A102C60}
 		{19E0E266-E6CC-4A29-9C79-9CF948B482BE} = {DBB5D792-51F5-4A77-B5A5-43D71A102C60}
-		{2CD09234-973B-4F62-8AAC-01B80CBA50B5} = {89B5F6AA-8553-48E5-9E46-3DB0131EE61B}
 		{A3198305-9CD1-4136-ADFC-D1C12FA692FA} = {2CD09234-973B-4F62-8AAC-01B80CBA50B5}
 		{DAB205A6-01DA-4607-ABA5-C8C1ACC0951B} = {89B5F6AA-8553-48E5-9E46-3DB0131EE61B}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {09DA4763-6E29-4E6B-AF9E-D81BE16D8AA5}
 	EndGlobalSection
 EndGlobal

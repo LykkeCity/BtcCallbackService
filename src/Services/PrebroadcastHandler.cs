@@ -13,14 +13,16 @@ namespace Services
         private readonly IBitCoinTransactionsRepository _bitCoinTransactionsRepository;
         private readonly IInternalOperationsRepository _internalOperationsRepository;
         private readonly IPerformanceMonitorFactory _performanceMonitorFactory;
+        private readonly IBitcoinTransactionService _bitcoinTransactionService;
 
         public PreBroadcastHandler(IBitCoinTransactionsRepository bitCoinTransactionsRepository,
             IInternalOperationsRepository internalOperationsRepository,
-            IPerformanceMonitorFactory performanceMonitorFactory)
+            IPerformanceMonitorFactory performanceMonitorFactory, IBitcoinTransactionService bitcoinTransactionService)
         {
             _bitCoinTransactionsRepository = bitCoinTransactionsRepository;
             _internalOperationsRepository = internalOperationsRepository;
             _performanceMonitorFactory = performanceMonitorFactory;
+            _bitcoinTransactionService = bitcoinTransactionService;
         }
 
         public async Task HandleNotification(TransactionNotification notification)
@@ -35,7 +37,7 @@ namespace Services
                     Hash = notification.TransactionHash,
                     TransactionId = notification.TransactionId,
                     CommandType = tx?.CommandType,
-                    OperationIds = GetOperationIds(tx)
+                    OperationIds = await GetOperationIds(tx)
                 });
 
                 monitor.Step("Wait for insert internal operation");
@@ -43,27 +45,28 @@ namespace Services
             }
         }
 
-        private string[] GetOperationIds(IBitcoinTransaction tx)
+        private async Task<string[]> GetOperationIds(IBitcoinTransaction tx)
         {
+            
             switch (tx?.CommandType)
             {
                 case CommandTypes.Issue:
-                    var issueContext = tx.ContextData.DeserializeJson<IssueContextData>();
+                    var issueContext = await _bitcoinTransactionService.GetTransactionContext<IssueContextData>(tx.TransactionId);
                     return new[] { issueContext.CashOperationId };
                 case CommandTypes.CashOut:
-                    var cashOutContext = tx.ContextData.DeserializeJson<CashOutContextData>();
+                    var cashOutContext = await _bitcoinTransactionService.GetTransactionContext<CashOutContextData>(tx.TransactionId);
                     return new[] { cashOutContext.CashOperationId };
                 case CommandTypes.Swap:
-                    var swapContext = tx.ContextData.DeserializeJson<SwapContextData>();
+                    var swapContext = await _bitcoinTransactionService.GetTransactionContext<SwapContextData>(tx.TransactionId);
                     return swapContext.Trades.Select(x => x.TradeId).ToArray();
                 case CommandTypes.Transfer:
-                    var transferContext = tx.ContextData.DeserializeJson<TransferContextData>();
+                    var transferContext = await _bitcoinTransactionService.GetTransactionContext<TransferContextData>(tx.TransactionId);
                     return transferContext.Transfers.Select(x => x.OperationId).ToArray();
                 case CommandTypes.TransferAll:
-                    var transferAllContext = tx.ContextData.DeserializeJson<TransferContextData>();
+                    var transferAllContext = await _bitcoinTransactionService.GetTransactionContext<TransferContextData>(tx.TransactionId);
                     return transferAllContext.Transfers.Select(x => x.OperationId).ToArray();
                 case CommandTypes.Destroy:
-                    var destroyContext = tx.ContextData.DeserializeJson<UncolorContextData>();
+                    var destroyContext = await _bitcoinTransactionService.GetTransactionContext<UncolorContextData>(tx.TransactionId);
                     return new[] { destroyContext.CashOperationId };
             }
 

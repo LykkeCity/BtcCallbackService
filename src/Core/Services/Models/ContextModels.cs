@@ -1,6 +1,11 @@
 ﻿namespace Core.Services.Models
 {
-    public class IssueContextData
+    public class BaseContextData
+    {
+        public string[] SignsClientIds { get; set; }
+    }
+
+    public class IssueContextData : BaseContextData
     {
         public string ClientId { get; set; }
         public string AssetId { get; set; }
@@ -9,7 +14,7 @@
         public string CashOperationId { get; set; }
     }
 
-    public class CashOutContextData
+    public class CashOutContextData : BaseContextData
     {
         public string ClientId { get; set; }
         public string AssetId { get; set; }
@@ -48,7 +53,7 @@
 
     }
 
-    public class SwapContextData
+    public class SwapContextData : BaseContextData
     {
         public class OrderModel
         {
@@ -67,7 +72,7 @@
         public TradeModel[] Trades { get; set; }
     }
 
-    public class TransferContextData
+    public class TransferContextData : BaseContextData
     {
         public class TransferModel
         {
@@ -178,7 +183,7 @@
         #endregion
     }
 
-    public class UncolorContextData
+    public class UncolorContextData : BaseContextData
     {
         public string ClientId { get; set; }
         public string AssetId { get; set; }

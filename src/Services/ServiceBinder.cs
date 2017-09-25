@@ -11,6 +11,7 @@ namespace Services
         {
             ioc.RegisterType<PreBroadcastHandler>().As<IPreBroadcastHandler>().SingleInstance();
             ioc.RegisterType<PostBroadcastHandler>().As<IPostBroadcastHandler>().SingleInstance();
+            ioc.RegisterType<BitcoinTransactionService>().As<IBitcoinTransactionService>().SingleInstance();
 
             ioc.RegisterType<PerformanceMonitorFactory>().As<IPerformanceMonitorFactory>().SingleInstance();
         }

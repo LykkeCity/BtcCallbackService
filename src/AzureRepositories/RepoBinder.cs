@@ -1,5 +1,6 @@
 ﻿using System;
 using Autofac;
+using AzureStorage.Blob;
 using AzureStorage.Queue;
 using AzureStorage.Tables;
 using AzureStorage.Tables.Templates.Index;
@@ -52,6 +53,9 @@ namespace AzureRepositories
                     new AzureTableStorage<InternalOperationEntity>(settings.Db.BitCoinQueueConnectionString,
                         "InternalOperations", log)))
                 .As<IInternalOperationsRepository>();
+
+            ioc.RegisterInstance(new BitcoinTransactionContextBlobStorage(new AzureBlobStorage(settings.Db.BitCoinQueueConnectionString)))
+                .As<IBitcoinTransactionContextBlobStorage>();
         }
     }
 }

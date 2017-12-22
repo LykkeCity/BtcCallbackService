@@ -14,15 +14,17 @@ namespace Services
         private readonly IInternalOperationsRepository _internalOperationsRepository;
         private readonly IPerformanceMonitorFactory _performanceMonitorFactory;
         private readonly IBitcoinTransactionService _bitcoinTransactionService;
+        private readonly IHashEventQueueSender _hashEventQueueSender;
 
         public PreBroadcastHandler(IBitCoinTransactionsRepository bitCoinTransactionsRepository,
             IInternalOperationsRepository internalOperationsRepository,
-            IPerformanceMonitorFactory performanceMonitorFactory, IBitcoinTransactionService bitcoinTransactionService)
+            IPerformanceMonitorFactory performanceMonitorFactory, IBitcoinTransactionService bitcoinTransactionService, IHashEventQueueSender hashEventQueueSender)
         {
             _bitCoinTransactionsRepository = bitCoinTransactionsRepository;
             _internalOperationsRepository = internalOperationsRepository;
             _performanceMonitorFactory = performanceMonitorFactory;
             _bitcoinTransactionService = bitcoinTransactionService;
+            _hashEventQueueSender = hashEventQueueSender;
         }
 
         public async Task HandleNotification(TransactionNotification notification)
@@ -39,15 +41,17 @@ namespace Services
                     CommandType = tx?.CommandType,
                     OperationIds = await GetOperationIds(tx)
                 });
+                
+                var hashEventTask = _hashEventQueueSender.Send(notification.TransactionId.ToString(), notification.TransactionHash);
 
                 monitor.Step("Wait for insert internal operation");
-                await insertInternalOperationTask;
+                await Task.WhenAll(hashEventTask, insertInternalOperationTask);
             }
         }
 
         private async Task<string[]> GetOperationIds(IBitcoinTransaction tx)
         {
-            
+
             switch (tx?.CommandType)
             {
                 case CommandTypes.Issue:

@@ -42,6 +42,11 @@ namespace AzureRepositories
                     .As<ITransactionQueueSender>();
 
             ioc.RegisterInstance(
+                    new HashEventQueueSender(
+                        new AzureQueueExt(settings.Db.BitCoinQueueConnectionString, "hash-events"), log))
+                .As<IHashEventQueueSender>();
+
+            ioc.RegisterInstance(
                     new ProcessedTransactionsRepository(
                         new AzureTableStorage<PreProcessedTransaction>(settings.Db.BitCoinQueueConnectionString,
                             "CallbackProcessed", log),

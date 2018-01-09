@@ -1,10 +1,15 @@
 ﻿using System;
 using System.IO;
+using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using AzureRepositories;
+using AzureStorage.Tables;
+using Common.Log;
 using Core.Settings;
-using Lykke.Bitcoin.CallbackService.Binders;
 using Lykke.Bitcoin.CallbackService.Middleware;
+using Lykke.Bitcoin.CallbackService.Modules;
+using Lykke.Logs;
+using Lykke.SettingsReader;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Internal;
@@ -19,13 +24,12 @@ namespace Lykke.Bitcoin.CallbackService
     public class Startup
     {
         public IConfigurationRoot Configuration { get; }
+        public ILog Log { get; private set; }
 
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
                .SetBasePath(env.ContentRootPath)
-               .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-               .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                .AddEnvironmentVariables();
             Configuration = builder.Build();
         }
@@ -34,11 +38,13 @@ namespace Lykke.Bitcoin.CallbackService
         // For more information on how to configure your application, visit http://go.microsoft.com/fwlink/?LinkID=398940
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
-#if DEBUG
-            var settings = GeneralSettingsReader.ReadGeneralSettingsLocal<CallbackServiceSettings>(Configuration.GetConnectionString("Main")).CallbackService;
-#else
-            var settings = GeneralSettingsReader.ReadGeneralSettings<CallbackServiceSettings>(Configuration.GetConnectionString("Main")).CallbackService;
-#endif
+            var appSettings = Configuration.LoadSettings<CallbackServiceSettings>();
+
+            var builder = new ContainerBuilder();
+
+            Log = CreateLogWithSlack(appSettings);
+
+            builder.RegisterModule(new JobModule(appSettings.Nested(x => x.CallbackService.Db), Log));
 
             services.AddMvc();
 
@@ -58,8 +64,7 @@ namespace Lykke.Bitcoin.CallbackService
                 var xmlPath = Path.Combine(basePath, "Lykke.Bitcoin.CallbackService.xml");
                 options.IncludeXmlComments(xmlPath);
             });
-
-            var builder = new AzureBinder().Bind(settings);
+            
             builder.Populate(services);
 
             return new AutofacServiceProvider(builder.Build());
@@ -82,6 +87,36 @@ namespace Lykke.Bitcoin.CallbackService
             app.UseMvc();
             app.UseSwagger();
             app.UseSwaggerUi("swagger/ui/index");
+        }
+
+        private static ILog CreateLogWithSlack(IReloadingManager<CallbackServiceSettings> settings)
+        {
+            var consoleLogger = new LogToConsole();
+            var aggregateLogger = new AggregateLogger();
+
+            aggregateLogger.AddLog(consoleLogger);
+
+            var dbLogConnectionStringManager = settings.Nested(x => x.CallbackService.Db.LogsConnString);
+            var dbLogConnectionString = dbLogConnectionStringManager.CurrentValue;
+
+            // Creating azure storage logger, which logs own messages to concole log
+            if (!string.IsNullOrEmpty(dbLogConnectionString) && !(dbLogConnectionString.StartsWith("${") && dbLogConnectionString.EndsWith("}")))
+            {
+                var persistenceManager = new LykkeLogToAzureStoragePersistenceManager(
+                    AzureTableStorage<LogEntity>.Create(dbLogConnectionStringManager, "PrebroadcastHandlerLog", consoleLogger),
+                    consoleLogger);
+                
+                var azureStorageLogger = new LykkeLogToAzureStorage(
+                    persistenceManager,
+                    null,
+                    consoleLogger);
+
+                azureStorageLogger.Start();
+
+                aggregateLogger.AddLog(azureStorageLogger);
+            }
+
+            return aggregateLogger;
         }
     }
 }

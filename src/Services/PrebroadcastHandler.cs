@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Common;
 using Core.PerformanceMonitor;
@@ -27,22 +29,37 @@ namespace Services
             _hashEventQueueSender = hashEventQueueSender;
         }
 
-        public async Task HandleNotification(TransactionNotification notification)
+        public Task HandleNotification(TransactionNotification notification)
+        {
+            return Handle(notification.TransactionId, notification.TransactionHash, true);
+        }
+
+        public Task HandleAggregatedCashout(List<Guid> id, string hash)
+        {
+            var tasks = id.Select(x => Handle(x, hash, false));
+
+            return Task.WhenAll(tasks);
+        }
+
+        private async Task Handle(Guid id, string hash, bool updateHash)
         {
             using (var monitor = _performanceMonitorFactory.Create("Prebroadcast"))
             {
                 monitor.Step("Find by transactiom id");
-                var tx = await _bitCoinTransactionsRepository.FindByTransactionIdAsync(notification.TransactionId.ToString());
+                var tx = await _bitCoinTransactionsRepository.FindByTransactionIdAsync(id.ToString());
 
                 var insertInternalOperationTask = _internalOperationsRepository.InsertOrReplaceAsync(new InternalOperation
                 {
-                    Hash = notification.TransactionHash,
-                    TransactionId = notification.TransactionId,
+                    Hash = hash,
+                    TransactionId = id,
                     CommandType = tx?.CommandType,
                     OperationIds = await GetOperationIds(tx)
                 });
-                
-                var hashEventTask = _hashEventQueueSender.Send(notification.TransactionId.ToString(), notification.TransactionHash);
+
+                var hashEventTask = Task.CompletedTask;
+
+                if (updateHash)
+                    hashEventTask = _hashEventQueueSender.Send(id.ToString(), hash);
 
                 monitor.Step("Wait for insert internal operation");
                 await Task.WhenAll(hashEventTask, insertInternalOperationTask);

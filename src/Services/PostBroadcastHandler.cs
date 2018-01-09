@@ -1,4 +1,7 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Core.PerformanceMonitor;
 using Core.Repositories;
 using Core.Services;
@@ -6,19 +9,20 @@ using Core.Services.Models;
 
 namespace Services
 {
-    //ToDo: remove and move all logic to TxDetector. Currently it is a proxy that send to old outdata (to use old code in SrvQueueHandler)
     public class PostBroadcastHandler : IPostBroadcastHandler
     {
         private readonly ITransactionQueueSender _transactionQueueSender;
         private readonly IBitCoinTransactionsRepository _bitCoinTransactionsRepository;
         private readonly IPerformanceMonitorFactory _performanceMonitorFactory;
+        private readonly IHashEventQueueSender _hashEventQueueSender;
 
         public PostBroadcastHandler(ITransactionQueueSender transactionQueueSender,
-            IBitCoinTransactionsRepository bitCoinTransactionsRepository, IPerformanceMonitorFactory performanceMonitorFactory)
+            IBitCoinTransactionsRepository bitCoinTransactionsRepository, IPerformanceMonitorFactory performanceMonitorFactory, IHashEventQueueSender hashEventQueueSender)
         {
             _transactionQueueSender = transactionQueueSender;
             _bitCoinTransactionsRepository = bitCoinTransactionsRepository;
             _performanceMonitorFactory = performanceMonitorFactory;
+            _hashEventQueueSender = hashEventQueueSender;
         }
 
         public async Task HandleNotification(TransactionNotification notification)
@@ -35,6 +39,13 @@ namespace Services
                     await _transactionQueueSender.Send(cmdType, notification.TransactionId.ToString(), notification.TransactionHash);
                 } 
             }
+        }
+
+        public Task HandleAggregatedCashout(List<Guid> ids, string hash)
+        {
+            var tasks = ids.Select(x => _hashEventQueueSender.Send(x.ToString(), hash));
+
+            return Task.WhenAll(tasks);
         }
     }
 }
